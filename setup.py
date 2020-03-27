@@ -1,4 +1,11 @@
+#!/usr/bin/env python
+
 from setuptools import setup
+
+
+def is_platform_windows():
+    return sys.platform == "win32" or sys.platform == "cygwin"
+
 
 description = "Simple command line pomodoro app with visualization of statistics"
 long_description = """
@@ -9,6 +16,9 @@ Check (https://en.wikipedia.org/wiki/Pomodoro_Technique) for more details.
 The code is based on : http://code.activestate.com/recipes/577358-pomodoro-timer/
 """
 
+if is_platform_windows():
+    os.rename('pomodoro', 'pomodoro.py')
+    os.rename('pomostat', 'pomostat.py')
 
 setup(
     name="pomodoro-cli",
@@ -32,7 +42,10 @@ setup(
                  'Operating System :: Unix',
                  'Operating System :: MacOS'],
     platforms='any',
-    scripts=['pomodoro', 'pomostat'],
+    if is_platform_windows():
+        scripts=['pomodoro.py', 'pomostat.py'],
+    else:
+        scripts=['pomodoro', 'pomostat'],
     include_package_data=True,
     data_files=['clock.mp3'],
     install_requires=['clize', 'sigtools', 'pandas', 'matplotlib'],
