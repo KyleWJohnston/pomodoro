@@ -45,19 +45,20 @@ config = configparser.ConfigParser()
 config.read(CONFIG_FILENAME)
 if 'DEFAULTS' not in config : #if the config doesn't exist or is of the wrong format
     #writes the default config to the file
-    config['DEFAULTS'] = {'work':'25', 'rest':'5', 'long':'15', 'cycles':'4', 'start':'0', 'repeat':'10', 'alarm':'True', 'notif':'False', 'timer':'False'}
+    config['DEFAULTS'] = {'work':'25', 'rest':'5', 'long':'15', 'cycles':'4', 'start':'0', 'repeat':'10', 'alarm':'True', 'notif':'False', 'timer':'False', 'seconds':'True'}
     with open(CONFIG_FILENAME, 'w') as configfile:
         config.write(configfile)
     config.read(CONFIG_FILENAME)
-work_default = config['DEFAULTS'].getint('work')
-rest_default = config['DEFAULTS'].getint('rest')
-long_default = config['DEFAULTS'].getint('long')
-cycles_default = config['DEFAULTS'].getint('cycles')
-start_default = config['DEFAULTS'].getint('start')
-repeat_default = config['DEFAULTS'].getint('repeat')
-alarm_default = config['DEFAULTS'].getboolean('alarm')
-notif_default = config['DEFAULTS'].getboolean('notif')
-timer_default = config['DEFAULTS'].getboolean('timer')
+work_default = config['DEFAULTS'].getint('work', fallback='25')
+rest_default = config['DEFAULTS'].getint('rest', fallback='5')
+long_default = config['DEFAULTS'].getint('long', fallback='15')
+cycles_default = config['DEFAULTS'].getint('cycles', fallback='4')
+start_default = config['DEFAULTS'].getint('start', fallback='0')
+repeat_default = config['DEFAULTS'].getint('repeat', fallback='10')
+alarm_default = config['DEFAULTS'].getboolean('alarm', fallback='True')
+notif_default = config['DEFAULTS'].getboolean('notif', fallback='False')
+timer_default = config['DEFAULTS'].getboolean('timer', fallback='False')
+seconds_default = config['DEFAULTS'].getboolean('seconds', fallback='True')
 
 
 def notify(title, content, more=''):
@@ -73,10 +74,10 @@ def notify(title, content, more=''):
     app.exec_()
 
 
-def tick(duration, timer):
+def tick(duration, timer, seconds):
     try:
         if timer:
-            cli_timer(duration)
+            cli_timer(duration, seconds)
         else:
             time.sleep(duration)
     except KeyboardInterrupt:
@@ -112,18 +113,25 @@ def write_pomo(start, stop, tag):
     fd.write(line)
     fd.close()
 
-def cli_timer(duration):
+
+def cli_timer(duration, seconds):
     for remaining in range(duration, -1, -1):
         sys.stdout.write("\r")
         hours, rem = divmod(remaining, 3600)
         mins, secs = divmod(rem, 60)
-        sys.stdout.write("Time remaining: {:0>2}:{:0>2}:{:0>2}".format(hours, mins, secs))
+        if seconds:
+            sys.stdout.write("Time remaining: {:0>2}:{:0>2}:{:0>2}".format(hours, mins, secs))
+        elif remaining < 60:
+            sys.stdout.write("Time remaining: less than 1 minute")
+        else:
+            sys.stdout.write("Time remaining: {:0>2}:{:0>2}".format(hours, mins))
         sys.stdout.flush()
         time.sleep(1)
     print('\n')
 
+
 @modifiers.kwoargs('long', 'cycles', 'start', 'repeat', 'alarm', 'notif', 'timer')
-def main(work=work_default, rest=rest_default, long=long_default, cycles=cycles_default, start=start_default, repeat=repeat_default, alarm=alarm_default, notif=notif_default, timer=timer_default):
+def main(work=work_default, rest=rest_default, long=long_default, cycles=cycles_default, start=start_default, repeat=repeat_default, alarm=alarm_default, notif=notif_default, timer=timer_default, seconds=seconds_default):
     """
     work : int
         nb of minuntes of work
@@ -152,11 +160,14 @@ def main(work=work_default, rest=rest_default, long=long_default, cycles=cycles_
 
     timer : bool
         whether to have cli timer visible
+        
+    seconds: bools
+        if timer=True, whether to show the seconds
     """
     for cycle in range(start, repeat):
         display("Work now, cycle {}/{}".format((cycle + 1) % cycles, cycles))
         start = datetime.now()
-        interrupted = tick(int(work) * 60, timer)
+        interrupted = tick(int(work) * 60, timer, seconds)
         if interrupted:
             break
         stop = datetime.now()
@@ -176,7 +187,7 @@ def main(work=work_default, rest=rest_default, long=long_default, cycles=cycles_
                 notify('pomodoro', 'Finished pomo, rest now.')
             display("Rest now")
         start = datetime.now()
-        interrupted = tick(rest_time, timer)
+        interrupted = tick(rest_time, timer, seconds)
         if interrupted:
             break
         stop = datetime.now()
