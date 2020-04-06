@@ -45,7 +45,7 @@ config = configparser.ConfigParser()
 config.read(CONFIG_FILENAME)
 if 'DEFAULTS' not in config : #if the config doesn't exist or is of the wrong format
     #writes the default config to the file
-    config['DEFAULTS'] = {'work':'25', 'rest':'5', 'long':'15', 'cycles':'4', 'start':'0', 'repeat':'10', 'alarm':'True', 'notif':'False', 'timer':'False', 'seconds':'True'}
+    config['DEFAULTS'] = {'work':'25', 'rest':'5', 'long':'15', 'cycles':'4', 'start':'0', 'repeat':'0', 'alarm':'True', 'notif':'False', 'timer':'False', 'seconds':'True'}
     with open(CONFIG_FILENAME, 'w') as configfile:
         config.write(configfile)
     config.read(CONFIG_FILENAME)
@@ -54,7 +54,7 @@ rest_default = config['DEFAULTS'].getint('rest', fallback='5')
 long_default = config['DEFAULTS'].getint('long', fallback='15')
 cycles_default = config['DEFAULTS'].getint('cycles', fallback='4')
 start_default = config['DEFAULTS'].getint('start', fallback='0')
-repeat_default = config['DEFAULTS'].getint('repeat', fallback='10')
+repeat_default = config['DEFAULTS'].getint('repeat', fallback='0')
 alarm_default = config['DEFAULTS'].getboolean('alarm', fallback='True')
 notif_default = config['DEFAULTS'].getboolean('notif', fallback='False')
 timer_default = config['DEFAULTS'].getboolean('timer', fallback='False')
@@ -149,7 +149,7 @@ def main(work=work_default, rest=rest_default, long=long_default, cycles=cycles_
         nb of cycles already completed in the set
 
     repeat : int
-        nb of cycles work-rest to do
+        nb of cycles work-rest to do (use 0 to continue until user interruption)
 
     alarm : bool
         whether to play an alarm each time a pomodoro is finished or started
@@ -164,7 +164,9 @@ def main(work=work_default, rest=rest_default, long=long_default, cycles=cycles_
     seconds: bools
         if timer=True, whether to show the seconds
     """
-    for cycle in range(start, repeat):
+    cycle = start
+    while repeat <= 0 or cycle != repeat:
+        # If repeat is >0, continue until cycle == repeat. If repeat <=0, continue until user interrupts.
         display("Work now, cycle {}/{}".format((cycle + 1) % cycles, cycles))
         start = datetime.now()
         interrupted = tick(int(work) * 60, timer, seconds)
@@ -198,6 +200,7 @@ def main(work=work_default, rest=rest_default, long=long_default, cycles=cycles_
         if notif:
             notify('pomodoro', 'Finished rest, work now.')
         display("Cycle complete")
+        cycle += 1
 
 
 if __name__ == "__main__":
