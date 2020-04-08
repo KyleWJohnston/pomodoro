@@ -127,10 +127,15 @@ def cli_timer(duration, seconds):
             sys.stdout.write("Time remaining: {:0>2}:{:0>2}".format(hours, mins))
         sys.stdout.flush()
         time.sleep(1)
+    sys.stdout.write("\r")
+    if seconds:
+        sys.stdout.write("Time remaining: {:0>2}:{:0>2}:{:0>2}             ".format(00, 00, 00))
+    else:
+        sys.stdout.write("Time remaining: {:0>2}:{:0>2}             ".format(00, 00))
     print('\n')
 
 
-@modifiers.kwoargs('long', 'cycles', 'start', 'repeat', 'alarm', 'notif', 'timer')
+@modifiers.kwoargs('long', 'cycles', 'start', 'repeat', 'alarm', 'notif', 'timer', 'seconds')
 def main(work=work_default, rest=rest_default, long=long_default, cycles=cycles_default, start=start_default, repeat=repeat_default, alarm=alarm_default, notif=notif_default, timer=timer_default, seconds=seconds_default):
     """
     work : int
@@ -161,13 +166,13 @@ def main(work=work_default, rest=rest_default, long=long_default, cycles=cycles_
     timer : bool
         whether to have cli timer visible
         
-    seconds: bools
+    seconds: bool
         if timer=True, whether to show the seconds
     """
     cycle = start
     while repeat <= 0 or cycle != repeat:
         # If repeat is >0, continue until cycle == repeat. If repeat <=0, continue until user interrupts.
-        display("Work now, cycle {}/{}".format((cycle + 1) % cycles, cycles))
+        display("Work now, cycle {}/{}".format((cycle % cycles) + 1, cycles))
         start = datetime.now()
         interrupted = tick(int(work) * 60, timer, seconds)
         if interrupted:
