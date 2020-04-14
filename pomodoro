@@ -160,18 +160,22 @@ def main(work=work_default, rest=rest_default, long=long_default, cycles=cycles_
         whether to play an alarm each time a pomodoro is finished or started
 
     notif : string
-        `none` to start next timer immediately, `cli` to start next timer on command line, `box` to send a message box
+        `none` to start next timer immediately, `cli` to start next timer using the command line, `box` to start next timer using a message box
 
     timer : bool
         whether to have cli timer visible
-        
+
     seconds: bool
         if timer=True, whether to show the seconds
     """
     cycle = start
     while repeat <= 0 or cycle != repeat:
+
+        # Work - prompt
         # If repeat is >0, continue until cycle == repeat. If repeat <=0, continue until user interrupts.
         display("Work now, cycle {}/{}".format((cycle % cycles) + 1, cycles))
+
+        # Work - timer
         start = datetime.now()
         interrupted = tick(int(work) * 60, timer, seconds)
         if interrupted:
@@ -181,34 +185,42 @@ def main(work=work_default, rest=rest_default, long=long_default, cycles=cycles_
         if alarm:
             play_alarm(ALARM_FILE)
 
+        # Rest - prompt
         if (cycle + 1) % cycles == 0:
             # If set complete, long rest
             rest_time = int(long) * 60
             if notif == 'cli':
-                input('Finished set. Press enter to begin long rest.')
+                interrupted = input('Finished set. Press enter to begin long rest.')
+                if interrupted:
+                    break
             if notif == 'box':
                 notify('pomodoro', 'Finished set, long rest now.')
             display("Long rest now")
         else:
+            # If partial set, normal (short) rest
             rest_time = int(rest) * 60
             if notif == 'cli':
                 input('Finished cycle. Press enter to begin long rest.')
             if notif == 'box':
                 notify('pomodoro', 'Finished cycle, rest now.')
             display("Rest now")
+
+        # Rest - timer
         start = datetime.now()
         interrupted = tick(rest_time, timer, seconds)
         if interrupted:
             break
         stop = datetime.now()
         write_pomo(start, stop, "rest")
-
         if alarm:
             play_alarm(ALARM_FILE)
         if notif == 'cli':
-            input('Finished rest. Press enter to begin work.')
+            interrupted = input('Finished rest. Press enter to begin work.')
+            if interrupted:
+                break
         if notif == 'box':
             notify('pomodoro', 'Finished rest, work now.')
+
         display("Cycle complete")
         cycle += 1
 
