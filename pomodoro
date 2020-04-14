@@ -45,21 +45,21 @@ config = configparser.ConfigParser()
 config.read(CONFIG_FILENAME)
 if 'DEFAULTS' not in config : #if the config doesn't exist or is of the wrong format
     #writes the default config to the file
-    config['DEFAULTS'] = {'work':'25', 'rest':'5', 'long':'15', 'cycles':'4', 'start':'0', 'repeat':'0', 'alarm':'True', 'notif':'False', 'timer':'False', 'seconds':'True', 'autostart':'False'}
+    config['DEFAULTS'] = {'work':25, 'rest':5, 'long':15, 'cycles':4, 'start':0, 'repeat':0, 'alarm':True, 'notif':False, 'timer':False, 'seconds':True, 'autostart':False}
     with open(CONFIG_FILENAME, 'w') as configfile:
         config.write(configfile)
     config.read(CONFIG_FILENAME)
-work_default = config['DEFAULTS'].getint('work', fallback='25')
-rest_default = config['DEFAULTS'].getint('rest', fallback='5')
-long_default = config['DEFAULTS'].getint('long', fallback='15')
-cycles_default = config['DEFAULTS'].getint('cycles', fallback='4')
-start_default = config['DEFAULTS'].getint('start', fallback='0')
-repeat_default = config['DEFAULTS'].getint('repeat', fallback='0')
-alarm_default = config['DEFAULTS'].getboolean('alarm', fallback='True')
-notif_default = config['DEFAULTS'].getboolean('notif', fallback='False')
-timer_default = config['DEFAULTS'].getboolean('timer', fallback='False')
-seconds_default = config['DEFAULTS'].getboolean('seconds', fallback='True')
-autostart_default = config['DEFAULTS'].getboolean('autostart', fallback='False')
+work_default = config['DEFAULTS'].getint('work', fallback=25)
+rest_default = config['DEFAULTS'].getint('rest', fallback=5)
+long_default = config['DEFAULTS'].getint('long', fallback=15)
+cycles_default = config['DEFAULTS'].getint('cycles', fallback=4)
+start_default = config['DEFAULTS'].getint('start', fallback=0)
+repeat_default = config['DEFAULTS'].getint('repeat', fallback=0)
+alarm_default = config['DEFAULTS'].getboolean('alarm', fallback=True)
+notif_default = config['DEFAULTS'].getboolean('notif', fallback=False)
+timer_default = config['DEFAULTS'].getboolean('timer', fallback=False)
+seconds_default = config['DEFAULTS'].getboolean('seconds', fallback=True)
+autostart_default = config['DEFAULTS'].getboolean('autostart', fallback=False)
 
 
 def notify(title, content, more=''):
@@ -167,10 +167,10 @@ def main(work=work_default, rest=rest_default, long=long_default, cycles=cycles_
     timer : bool
         whether to have cli timer visible
 
-    seconds: bool
+    seconds : bool
         whether to show the seconds
 
-    autostart: bool
+    autostart : bool
         whether to automatically start the next timer instead of manually pressing enter
     """
     cycle = start
