@@ -18,6 +18,18 @@ except ImportError:
 else:
     has_qt = True
 
+if sys.platform == "win32":
+    try:
+        from win10toast import ToastNotifier
+    except ImportError:
+        has_win10toast = False
+    else:
+        has_win10toast = True
+        from win10toast import ToastNotifier
+        toaster = ToastNotifier()
+else:
+    has_win10toast = True
+
 
 display = print
 script_dir = os.path.dirname(__file__)
@@ -62,16 +74,24 @@ seconds_default = config['DEFAULTS'].getboolean('seconds', fallback='True')
 
 
 def notify(title, content, more=''):
-    if not has_qt:
+    if has_win10toast:
+        toaster.show_toast('Pomodoro',
+                           content,
+                           icon_path=None,
+                           duration=8,
+                           threaded=True)
+        while toaster.notification_active(): time.sleep(1)
         return
-    app = QApplication(sys.argv)
-    msg = QMessageBox()
-    msg.setIcon(QMessageBox.Information)
-    msg.setText(content)
-    msg.setWindowTitle(title)
-    msg.setDetailedText(more)
-    msg.show()
-    app.exec_()
+    elif has_qt:
+        app = QApplication(sys.argv)
+        msg = QMessageBox()
+        msg.setIcon(QMessageBox.Information)
+        msg.setText(content)
+        msg.setWindowTitle(title)
+        msg.setDetailedText(more)
+        msg.show()
+        app.exec_()
+        return
 
 
 def tick(duration, timer, seconds):
