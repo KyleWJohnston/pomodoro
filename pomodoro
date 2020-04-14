@@ -45,7 +45,7 @@ config = configparser.ConfigParser()
 config.read(CONFIG_FILENAME)
 if 'DEFAULTS' not in config : #if the config doesn't exist or is of the wrong format
     #writes the default config to the file
-    config['DEFAULTS'] = {'work':'25', 'rest':'5', 'long':'15', 'cycles':'4', 'start':'0', 'repeat':'0', 'alarm':'True', 'notif':'cli', 'timer':'False', 'seconds':'True'}
+    config['DEFAULTS'] = {'work':'25', 'rest':'5', 'long':'15', 'cycles':'4', 'start':'0', 'repeat':'0', 'alarm':'True', 'notif':'False', 'timer':'False', 'seconds':'True', 'autostart':'False'}
     with open(CONFIG_FILENAME, 'w') as configfile:
         config.write(configfile)
     config.read(CONFIG_FILENAME)
@@ -56,9 +56,10 @@ cycles_default = config['DEFAULTS'].getint('cycles', fallback='4')
 start_default = config['DEFAULTS'].getint('start', fallback='0')
 repeat_default = config['DEFAULTS'].getint('repeat', fallback='0')
 alarm_default = config['DEFAULTS'].getboolean('alarm', fallback='True')
-notif_default = config['DEFAULTS'].get('notif', fallback='cli')
+notif_default = config['DEFAULTS'].getboolean('notif', fallback='False')
 timer_default = config['DEFAULTS'].getboolean('timer', fallback='False')
 seconds_default = config['DEFAULTS'].getboolean('seconds', fallback='True')
+autostart_default = config['DEFAULTS'].getboolean('autostart', fallback='False')
 
 
 def notify(title, content, more=''):
@@ -135,8 +136,8 @@ def cli_timer(duration, seconds):
     print('\n')
 
 
-@modifiers.kwoargs('long', 'cycles', 'start', 'repeat', 'alarm', 'notif', 'timer', 'seconds')
-def main(work=work_default, rest=rest_default, long=long_default, cycles=cycles_default, start=start_default, repeat=repeat_default, alarm=alarm_default, notif=notif_default, timer=timer_default, seconds=seconds_default):
+@modifiers.kwoargs('long', 'cycles', 'start', 'repeat', 'alarm', 'notif', 'timer', 'seconds', 'autostart')
+def main(work=work_default, rest=rest_default, long=long_default, cycles=cycles_default, start=start_default, repeat=repeat_default, alarm=alarm_default, notif=notif_default, timer=timer_default, seconds=seconds_default, autostart=autostart_default):
     """
     work : int
         nb of minuntes of work
@@ -159,14 +160,18 @@ def main(work=work_default, rest=rest_default, long=long_default, cycles=cycles_
     alarm : bool
         whether to play an alarm each time a pomodoro is finished or started
 
-    notif : string
-        `none` to start next timer immediately, `cli` to start next timer using the command line, `box` to start next timer using a message box
+    notif : bool
+        whether to send a message box each time a pomodoro is finished or
+        started
 
     timer : bool
         whether to have cli timer visible
 
     seconds: bool
-        if timer=True, whether to show the seconds
+        whether to show the seconds
+
+    autostart: bool
+        whether to automatically start the next timer instead of manually pressing enter
     """
     cycle = start
     while repeat <= 0 or cycle != repeat:
@@ -189,20 +194,22 @@ def main(work=work_default, rest=rest_default, long=long_default, cycles=cycles_
         if (cycle + 1) % cycles == 0:
             # If set complete, long rest
             rest_time = int(long) * 60
-            if notif == 'cli':
+            if notif:
+                notify('pomodoro', 'Finished set, start timer to long rest now.')
+            if not autostart:
                 interrupted = input('Finished set. Press enter to begin long rest.')
                 if interrupted:
                     break
-            if notif == 'box':
-                notify('pomodoro', 'Finished set, long rest now.')
             display("Long rest now")
         else:
             # If partial set, normal (short) rest
             rest_time = int(rest) * 60
-            if notif == 'cli':
-                input('Finished cycle. Press enter to begin long rest.')
-            if notif == 'box':
-                notify('pomodoro', 'Finished cycle, rest now.')
+            if notif:
+                notify('pomodoro', 'Finished cycle, start timer to rest now.')
+            if not autostart:
+                interrupted = input('Finished cycle. Press enter to begin rest.')
+                if interrupted:
+                    break
             display("Rest now")
 
         # Rest - timer
@@ -214,12 +221,12 @@ def main(work=work_default, rest=rest_default, long=long_default, cycles=cycles_
         write_pomo(start, stop, "rest")
         if alarm:
             play_alarm(ALARM_FILE)
-        if notif == 'cli':
+        if notif:
+            notify('pomodoro', 'Finished rest, start timer to work now.')
+        if not autostart:
             interrupted = input('Finished rest. Press enter to begin work.')
             if interrupted:
                 break
-        if notif == 'box':
-            notify('pomodoro', 'Finished rest, work now.')
 
         display("Cycle complete")
         cycle += 1
