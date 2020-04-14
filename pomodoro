@@ -171,8 +171,12 @@ def main(work=work_default, rest=rest_default, long=long_default, cycles=cycles_
     """
     cycle = start
     while repeat <= 0 or cycle != repeat:
+
+        # Work - prompt
         # If repeat is >0, continue until cycle == repeat. If repeat <=0, continue until user interrupts.
         display("Work now, cycle {}/{}".format((cycle % cycles) + 1, cycles))
+
+        # Work - timer
         start = datetime.now()
         interrupted = tick(int(work) * 60, timer, seconds)
         if interrupted:
@@ -182,6 +186,7 @@ def main(work=work_default, rest=rest_default, long=long_default, cycles=cycles_
         if alarm:
             play_alarm(ALARM_FILE)
 
+        # Rest - prompt
         if (cycle + 1) % cycles == 0:
             # If set complete, long rest
             rest_time = int(long) * 60
@@ -189,21 +194,24 @@ def main(work=work_default, rest=rest_default, long=long_default, cycles=cycles_
                 notify('pomodoro', 'Finished set, long rest now.')
             display("Long rest now")
         else:
+            # If partial set, normal (short) rest
             rest_time = int(rest) * 60
             if notif:
                 notify('pomodoro', 'Finished pomo, rest now.')
             display("Rest now")
+
+        # Rest - timer
         start = datetime.now()
         interrupted = tick(rest_time, timer, seconds)
         if interrupted:
             break
         stop = datetime.now()
         write_pomo(start, stop, "rest")
-
         if alarm:
             play_alarm(ALARM_FILE)
         if notif:
             notify('pomodoro', 'Finished rest, work now.')
+
         display("Cycle complete")
         cycle += 1
 
