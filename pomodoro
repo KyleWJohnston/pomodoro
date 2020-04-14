@@ -165,9 +165,9 @@ def main(work=work_default, rest=rest_default, long=long_default, cycles=cycles_
 
     timer : bool
         whether to have cli timer visible
-        
+
     seconds: bool
-        if timer=True, whether to show the seconds
+        whether to show the seconds
     """
     cycle = start
     while repeat <= 0 or cycle != repeat:
