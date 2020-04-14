@@ -189,6 +189,7 @@ def main(work=work_default, rest=rest_default, long=long_default, cycles=cycles_
                 notify('pomodoro', 'Finished set, long rest now.')
             display("Long rest now")
         else:
+            # If partial set, normal (short) rest
             rest_time = int(rest) * 60
             if notif:
                 notify('pomodoro', 'Finished pomo, rest now.')
