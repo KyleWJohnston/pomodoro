@@ -79,8 +79,7 @@ def notify(title, content, more=''):
                            content,
                            icon_path=None,
                            duration=8,
-                           threaded=True)
-        while toaster.notification_active(): time.sleep(1)
+                           threaded=False)
         return
     elif has_qt:
         app = QApplication(sys.argv)
@@ -211,13 +210,19 @@ def main(work=work_default, rest=rest_default, long=long_default, cycles=cycles_
             # If set complete, long rest
             rest_time = int(long) * 60
             if notif:
-                notify('pomodoro', 'Finished set, long rest now.')
+                notify('pomodoro', 'Finished set, start timer to long rest now.')
+            interrupted = input('Finished set. Press enter to begin long rest.')
+            if interrupted:
+                break
             display("Long rest now")
         else:
             # If partial set, normal (short) rest
             rest_time = int(rest) * 60
             if notif:
-                notify('pomodoro', 'Finished pomo, rest now.')
+                notify('pomodoro', 'Finished cycle, start timer to rest now.')
+            interrupted = input('Finished cycle. Press enter to begin rest.')
+            if interrupted:
+                break
             display("Rest now")
 
         # Rest - timer
@@ -230,7 +235,10 @@ def main(work=work_default, rest=rest_default, long=long_default, cycles=cycles_
         if alarm:
             play_alarm(ALARM_FILE)
         if notif:
-            notify('pomodoro', 'Finished rest, work now.')
+            notify('pomodoro', 'Finished rest, start timer to work now.')
+        interrupted = input('Finished rest. Press enter to begin work.')
+        if interrupted:
+            break
 
         display("Cycle complete")
         cycle += 1
