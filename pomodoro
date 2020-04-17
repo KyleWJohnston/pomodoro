@@ -62,17 +62,25 @@ seconds_default = config['DEFAULTS'].getboolean('seconds', fallback=True)
 autostart_default = config['DEFAULTS'].getboolean('autostart', fallback=False)
 
 
-def notify(title, content, more=''):
+def notify(title, content, autostart):
     if not has_qt:
-        return
+        return autostart
     app = QApplication(sys.argv)
     msg = QMessageBox()
     msg.setIcon(QMessageBox.Information)
-    msg.setText(content)
+    msg.setText(content + ' Start next timer now?')
     msg.setWindowTitle(title)
-    msg.setDetailedText(more)
+    msg.setStandardButtons(QMessageBox.Yes | QMessageBox.Cancel | QMessageBox.Abort)
     msg.show()
-    app.exec_()
+    msg_return = msg.exec_()
+    if msg_return == QMessageBox.Abort:
+        exit()
+    elif msg_return == QMessageBox.Yes:
+        # Automatically begin next timer
+        return True
+    else:
+        # Require user to begin next timer from command line
+        return False
 
 
 def tick(duration, timer, seconds):
@@ -171,7 +179,7 @@ def main(work=work_default, rest=rest_default, long=long_default, cycles=cycles_
         whether to show the seconds
 
     autostart : bool
-        whether to automatically start the next timer instead of manually pressing enter
+        whether to automatically start the next timer instead of manually pressing enter (applies only when notif=False)
     """
     cycle = start
     while repeat <= 0 or cycle != repeat:
@@ -195,7 +203,7 @@ def main(work=work_default, rest=rest_default, long=long_default, cycles=cycles_
             # If set complete, long rest
             rest_time = int(long) * 60
             if notif:
-                notify('pomodoro', 'Finished set, start timer to long rest now.')
+                autostart = notify('pomodoro', 'Finished set, start timer to long rest now.', autostart)
             if not autostart:
                 interrupted = input('Finished set. Press enter to begin long rest.')
                 if interrupted:
@@ -205,7 +213,7 @@ def main(work=work_default, rest=rest_default, long=long_default, cycles=cycles_
             # If partial set, normal (short) rest
             rest_time = int(rest) * 60
             if notif:
-                notify('pomodoro', 'Finished cycle, start timer to rest now.')
+                autostart = notify('pomodoro', 'Finished cycle, start timer to rest now.', autostart)
             if not autostart:
                 interrupted = input('Finished cycle. Press enter to begin rest.')
                 if interrupted:
@@ -222,7 +230,7 @@ def main(work=work_default, rest=rest_default, long=long_default, cycles=cycles_
         if alarm:
             play_alarm(ALARM_FILE)
         if notif:
-            notify('pomodoro', 'Finished rest, start timer to work now.')
+            autostart = notify('pomodoro', 'Finished rest, start timer to work now.', autostart)
         if not autostart:
             interrupted = input('Finished rest. Press enter to begin work.')
             if interrupted:
