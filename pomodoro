@@ -111,9 +111,12 @@ def play_alarm(filename):
             return
 
 
-def write_pomo(start, stop, tag):
+def write_pomo(start, stop, tag, description):
     duration = (stop - start).total_seconds() / 60.
-    line = "{0},{1},{2},{3}\n".format(tag, start, stop, duration)
+    if description == '':
+        line = "{0},{1},{2},{3}\n".format(tag, start, stop, duration)
+    else:
+        line = "{0},{1},{2},{3},{4}\n".format(tag, start, stop, duration, description)
     if not os.path.exists(DATA_FILENAME):
         fd = open(DATA_FILENAME, "w")
         fd.write("work,start,end,duration\n")
@@ -163,7 +166,8 @@ def main(work=work_default, rest=rest_default, long=long_default, cycles=cycles_
         nb of cycles already completed in the set
 
     repeat : int
-        nb of cycles work-rest to do (use 0 to continue until user interruption)
+        nb of cycles work-rest to do (use 0 to continue until user
+        interruption)
 
     alarm : bool
         whether to play an alarm each time a pomodoro is finished or started
@@ -179,10 +183,16 @@ def main(work=work_default, rest=rest_default, long=long_default, cycles=cycles_
         whether to show the seconds
 
     autostart : bool
-        whether to automatically start the next timer instead of manually pressing enter (applies only when notif=False)
+        whether to automatically start the next timer instead of manually
+        pressing enter
+
+    description : string
+        description of the task to be saved with the CSV
     """
     cycle = start
     while repeat <= 0 or cycle != repeat:
+        description_work = ''
+        description_rest = ''
 
         # Work - prompt
         # If repeat is >0, continue until cycle == repeat. If repeat <=0, continue until user interrupts.
@@ -194,7 +204,7 @@ def main(work=work_default, rest=rest_default, long=long_default, cycles=cycles_
         if interrupted:
             break
         stop = datetime.now()
-        write_pomo(start, stop, "work")
+        write_pomo(start, stop, "work", '"' + description_work + '"')
         if alarm:
             play_alarm(ALARM_FILE)
 
@@ -205,9 +215,7 @@ def main(work=work_default, rest=rest_default, long=long_default, cycles=cycles_
             if notif:
                 autostart = notify('pomodoro', 'Finished set, start timer to long rest now.', autostart)
             if not autostart:
-                interrupted = input('Finished set. Press enter to begin long rest.')
-                if interrupted:
-                    break
+                description_rest = input('Finished set. Enter note and then press enter to begin long rest: ')
             display("Long rest now")
         else:
             # If partial set, normal (short) rest
@@ -215,9 +223,7 @@ def main(work=work_default, rest=rest_default, long=long_default, cycles=cycles_
             if notif:
                 autostart = notify('pomodoro', 'Finished cycle, start timer to rest now.', autostart)
             if not autostart:
-                interrupted = input('Finished cycle. Press enter to begin rest.')
-                if interrupted:
-                    break
+                description_rest = input('Finished cycle. Enter note and then press enter to begin rest: ')
             display("Rest now")
 
         # Rest - timer
@@ -226,15 +232,13 @@ def main(work=work_default, rest=rest_default, long=long_default, cycles=cycles_
         if interrupted:
             break
         stop = datetime.now()
-        write_pomo(start, stop, "rest")
+        write_pomo(start, stop, "rest", '"' + description_rest + '"')
         if alarm:
             play_alarm(ALARM_FILE)
         if notif:
             autostart = notify('pomodoro', 'Finished rest, start timer to work now.', autostart)
         if not autostart:
-            interrupted = input('Finished rest. Press enter to begin work.')
-            if interrupted:
-                break
+            description_work = input('Finished rest. Enter note and then press enter to begin work: ')
 
         display("Cycle complete")
         cycle += 1
